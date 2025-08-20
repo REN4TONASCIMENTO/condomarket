@@ -56,13 +56,15 @@ Siga os passos abaixo para rodar o projeto localmente.
 git clone https://github.com/REN4TONASCIMENTO/condomarket.git
 
 2. **Acesse a pasta do projeto:**
+```bash
 cd SEU_REPOSITORIO
 
-
 3.**Instale as dependências:**
-
+```bash
+npm install
 
 4. **Configure variáveis de ambiente criando .env.local na raiz:**
+```env
 REACT_APP_FIREBASE_API_KEY=sua_chave_da_API
 REACT_APP_FIREBASE_AUTH_DOMAIN=seu_domínio_de_autenticação
 REACT_APP_FIREBASE_PROJECT_ID=seu_id_do_projeto
@@ -71,25 +73,11 @@ REACT_APP_FIREBASE_MESSAGING_SENDER_ID=seu_id_de_envio_de_mensagens
 REACT_APP_FIREBASE_APP_ID=seu_id_do_app
 
 5. **Execute a aplicação:**
+```bash
 npm start
 
 6. **Acesse o navegador:**
 http://localhost
-
-## 🤝 Como Contribuir
-
-Se você quiser contribuir com este projeto:
-
-1. Faça um **Fork** do projeto.  
-2. Crie uma nova branch:
-```bash
-git checkout -b feature/sua-feature
-
-
-
-
-
-
 
 ## Aviso de Direitos Autorais
 
