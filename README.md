@@ -48,7 +48,6 @@ Siga os passos abaixo para rodar o projeto localmente.
 
 - [Git](https://git-scm.com)  
 - [Node.js](https://nodejs.org/en/)  
-- Editor de código, recomendado: [VSCode](https://code.visualstudio.com/)
 
 ### Passo a Passo
 
