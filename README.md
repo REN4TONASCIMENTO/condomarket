@@ -84,6 +84,7 @@ npm start
 6. **Acesse o navegador:**
 ```bash
 http://localhost
+```
 
 ## Aviso de Direitos Autorais
 
