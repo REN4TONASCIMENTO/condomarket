@@ -4,7 +4,7 @@
 
 ![Status do Projeto](https://img.shields.io/badge/status-conclu%C3%ADdo-brightgreen?style=for-the-badge)
 ![Licença](https://img.shields.io/badge/licença-Todos%20os%20Direitos%20Reservados-red?style=for-the-badge)
-![Último Commit](https://img.shields.io/github/last-commit/REN4TONASCIMENTO/condomarket?style=for-the-badge)
+**Último Commit:** ![Último Commit](https://img.shields.io/github/last-commit/REN4TONASCIMENTO/condomarket?style=for-the-badge)
 
 ---
 
