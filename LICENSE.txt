@@ -1,0 +1,25 @@
+LICENÇA PROPRIETÁRIA – TODOS OS DIREITOS RESERVADOS
+
+Copyright (c) 2025 Renato Nascimento. Todos os direitos reservados.
+
+1. Propriedade
+Este software, incluindo todo o código-fonte, documentação, imagens, arquivos de design, e quaisquer outros materiais relacionados (“Software”) é de propriedade exclusiva de Renato Nascimento.
+
+2. Permissão de Uso
+O Software é fornecido exclusivamente para uso pessoal e estudo. Nenhuma parte do Software pode ser copiada, distribuída, modificada, publicada, vendida, licenciada, sublicenciada, ou usada para fins comerciais sem autorização expressa por escrito do autor.
+
+3. Proibição de Engenharia Reversa
+É estritamente proibida a engenharia reversa, descompilação, desmontagem, ou tentativa de derivar o código-fonte do Software.
+
+4. Distribuição e Divulgação
+Nenhuma parte do Software pode ser reproduzida, transmitida, distribuída ou divulgada a terceiros sem permissão expressa do autor.
+
+5. Limitação de Responsabilidade
+O Software é fornecido "no estado em que se encontra", sem garantias de qualquer tipo. O autor não se responsabiliza por quaisquer danos diretos, indiretos, incidentais ou consequentes decorrentes do uso ou impossibilidade de uso do Software.
+
+6. Autorização Especial
+Para quaisquer usos não cobertos por esta licença, incluindo uso comercial, distribuição ou integração em outros sistemas, é necessário obter autorização expressa e por escrito do autor. Para contato: renatonascimento2001@gmail.com.
+
+7. Aceitação
+O uso do Software implica a aceitação integral desta licença.
+
