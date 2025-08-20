@@ -1,31 +1,11 @@
-# 🏢 Condomínio Marketplace
+ # 🏢 Condomínio Marketplace
 
 > Conectando moradores e empreendedores locais dentro de condomínios.
 
 ![Status do Projeto](https://img.shields.io/badge/status-conclu%C3%ADdo-brightgreen?style=for-the-badge)
 ![Licença](https://img.shields.io/badge/license-All%20Rights%20Reserved-red?style=for-the-badge)
 ![Tamanho do Repositório](https://img.shields.io/github/repo-size/SEU_USUARIO/SEU_REPOSITORIO?style=for-the-badge)
-![Último Commit](https://img.shields.io/github/last-commit/SEU_USUARIO/SEU_REPOSITORIO?style=for-the-badge)
-
----
-
-## ✨ Demonstração
-
-[**Acesse a Demonstração Ao Vivo »**](LINK_PARA_SEU_DEPLOY)
-
-![Demonstração do projeto](./caminho/para/sua/imagem.gif)
-
----
-
-## 📋 Índice
-
-- [📖 Sobre o Projeto](#-sobre-o-projeto)
-- [✨ Funcionalidades](#-funcionalidades)
-- [🛠️ Tecnologias Utilizadas](#-tecnologias-utilizadas)
-- [🚀 Como Executar o Projeto](#-como-executar-o-projeto)
-- [🤝 Como Contribuir](#-como-contribuir)
-- [📝 Licença](#-licença)
-- [👨‍💻 Autor](#-autor)
+![Último Commit](https://img.shields.io/github/last-commit/https://github.com/REN4TONASCIMENTO/condomarket?style=for-the-badge)
 
 ---
 
@@ -53,6 +33,12 @@ Este projeto foi desenvolvido com o objetivo de criar um **marketplace interno p
 ![Node.js](https://img.shields.io/badge/Node.js-%23339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-%2338B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![Git](https://img.shields.io/badge/Git-%23F05032?style=for-the-badge&logo=git&logoColor=white)
+
+---
+
+## ✨ Demonstração
+
+[**Acesse a Demonstração Ao Vivo »**](LINK_PARA_SEU_DEPLOY)
 
 ---
 
