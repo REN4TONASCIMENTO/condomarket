@@ -3,7 +3,7 @@
 > Conectando moradores e empreendedores locais dentro de condomínios.
 
 ![Status do Projeto](https://img.shields.io/badge/status-conclu%C3%ADdo-brightgreen?style=for-the-badge)
-![Licença](https://img.shields.io/badge/license-All%20Rights%20Reserved-red?style=for-the-badge)
+![Licença](https://img.shields.io/badge/licença-Todos%20os%20Direitos%20Reservados-red?style=for-the-badge)
 ![Tamanho do Repositório](https://img.shields.io/github/repo-size/REN4TONASCIMENTO/condomarket?style=for-the-badge)
 ![Último Commit](https://img.shields.io/github/last-commit/REN4TONASCIMENTO/condomarket?style=for-the-badge)
 
