@@ -85,8 +85,17 @@ npm start
 ```bash
 http://localhost
 ```
+---
 
-## Aviso de Direitos Autorais
+## Licença
 
 Este projeto é protegido por direitos autorais. Nenhuma parte pode ser usada, copiada ou distribuída sem autorização do autor.
+---
+
+## 👨‍💻 Autor
+
+Feito por Renato Nascimento!
+
+[![Linkedin Badge](https://img.shields.io/badge/-Renato-Nascimento-blue?style=flat-square&logo=Linkedin&logoColor=white&link=https://www.linkedin.com/in/-renatonascimento/)](https://www.linkedin.com/in/-renatonascimento/)
+[![Gmail Badge](https://img.shields.io/badge/-renatonascimento2001@gmail.com-c14438?style=flat-square&logo=Gmail&logoColor=white&link=mailto:renatonascimento2001@gmail.com)](mailto:renatonascimento2001@gmail.com)
 
