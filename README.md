@@ -89,7 +89,8 @@ http://localhost
 
 ## Licença
 
-Este projeto é protegido por direitos autorais. Nenhuma parte pode ser usada, copiada ou distribuída sem autorização do autor.
+Este projeto é protegido por direitos autorais. Nenhuma parte pode ser usada, copiada ou distribuída sem autorização do autor (consulte a licensa).
+
 ---
 
 ## 👨‍💻 Autor
