@@ -1,4 +1,4 @@
- # 🏢 Condomínio Marketplace
+ # 🏢 CondoMarket
 
 > Conectando moradores e empreendedores locais dentro de condomínios.
 
