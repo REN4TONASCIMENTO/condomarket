@@ -1,65 +1,70 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getDoc, doc, collection, getDocs, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { getDoc, doc, collection, getDocs, updateDoc, addDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { db } from '../../firebase/firebase.js';
+import { ArrowLeftIcon } from '../Shared/icons.js';
 
-const LoyaltyPointsScreen = ({ user, setScreen }) => {
+const LoyaltyPointsScreen = ({ userProfile, setScreen }) => {
     const [loyaltyData, setLoyaltyData] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchLoyaltyData = useCallback(async () => {
         setLoading(true);
         try {
-            const pointsRef = collection(db, 'users', user.uid, 'loyaltyPoints');
-            const pointsSnapshot = await getDocs(pointsRef);
-            const userPoints = pointsSnapshot.docs.map(snapshotDoc => ({
-                vendorId: snapshotDoc.id,
-                ...snapshotDoc.data()
-            }));
+            // Buscar todos os vendedores
+            const vendorsRef = collection(db, 'vendors');
+            const vendorsSnapshot = await getDocs(vendorsRef);
+            const allVendors = vendorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-            const enrichedData = await Promise.all(userPoints.map(async (point) => {
-                const loyaltyConfigRef = doc(db, 'vendors', point.vendorId, 'loyaltySettings', 'config');
+            // Para cada vendedor, garantir registro de pontos do usuário
+            const pointsPromises = allVendors.map(async (vendor) => {
+                const userPointsRef = doc(db, 'users', userProfile.uid, 'loyaltyPoints', vendor.id);
+                const userPointsSnap = await getDoc(userPointsRef);
+
+                if (!userPointsSnap.exists()) {
+                    await setDoc(userPointsRef, { points: 0 });
+                }
+
+                const loyaltyConfigRef = doc(db, 'vendors', vendor.id, 'loyaltySettings', 'config');
                 const configSnap = await getDoc(loyaltyConfigRef);
 
-                const vendorRef = doc(db, 'vendors', point.vendorId);
-                const vendorSnap = await getDoc(vendorRef);
-
                 return {
-                    ...point,
-                    settings: configSnap.exists() ? configSnap.data() : null,
-                    vendorName: vendorSnap.exists() ? vendorSnap.data().name : "Loja"
+                    vendorId: vendor.id,
+                    vendorName: vendor.name || "Loja",
+                    points: userPointsSnap.exists() ? userPointsSnap.data().points : 0,
+                    settings: configSnap.exists() ? configSnap.data() : null
                 };
-            }));
+            });
 
+            const enrichedData = await Promise.all(pointsPromises);
             setLoyaltyData(enrichedData);
         } catch (error) {
-            console.error("Erro ao carregar pontos:", error);
+            console.error("Erro ao carregar pontos de fidelidade:", error);
         }
         setLoading(false);
-    }, [user]);
+    }, [userProfile]);
 
     useEffect(() => {
-        if (user) fetchLoyaltyData();
-    }, [user, fetchLoyaltyData]);
+        if (userProfile) fetchLoyaltyData();
+    }, [userProfile, fetchLoyaltyData]);
 
     const handleRedeem = async (vendorId, requiredPoints, userPoints) => {
         if (userPoints < requiredPoints) return;
 
         try {
-            const userPointsRef = doc(db, 'users', user.uid, 'loyaltyPoints', vendorId);
+            const userPointsRef = doc(db, 'users', userProfile.uid, 'loyaltyPoints', vendorId);
             await updateDoc(userPointsRef, { points: userPoints - requiredPoints });
 
             const redemptionRef = collection(db, 'vendors', vendorId, 'redemptions');
             await addDoc(redemptionRef, {
-                userId: user.uid,
+                userId: userProfile.uid,
                 redeemedAt: serverTimestamp(),
             });
 
             alert('Resgate realizado com sucesso!');
             fetchLoyaltyData();
         } catch (error) {
-            console.error("Erro ao resgatar:", error);
-            alert('Erro ao realizar resgate');
+            console.error("Erro ao resgatar pontos:", error);
+            alert('Erro ao realizar resgate. Tente novamente.');
         }
     };
 
@@ -71,7 +76,7 @@ const LoyaltyPointsScreen = ({ user, setScreen }) => {
                 </button>
                 <h1 className="text-lg font-bold">Meus Pontos de Fidelidade</h1>
             </div>
-            
+
             <div className="p-4 space-y-4">
                 {loading ? (
                     <p>Carregando...</p>
@@ -81,30 +86,28 @@ const LoyaltyPointsScreen = ({ user, setScreen }) => {
                     loyaltyData.map((data, index) => (
                         <div key={index} className="bg-white shadow rounded-lg p-4">
                             <h2 className="text-md font-semibold">{data.vendorName}</h2>
-                            <p className="text-sm text-gray-500">
-                                {data.points} pontos
-                            </p>
+                            <p className="text-sm text-gray-500">{data.points} pontos</p>
                             {data.settings ? (
                                 <div>
                                     <p className="text-sm">
-                                        Resgate disponível a cada {data.settings.pointsRequired} pontos
+                                        Resgate disponível a cada {data.settings.pointsNeeded} pontos
                                     </p>
                                     <div className="w-full bg-gray-200 rounded-full h-2.5 my-2">
                                         <div
                                             className="bg-green-500 h-2.5 rounded-full"
                                             style={{
                                                 width: `${Math.min(
-                                                    (data.points / data.settings.pointsRequired) * 100,
+                                                    (data.points / data.settings.pointsNeeded) * 100,
                                                     100
                                                 )}%`
                                             }}
                                         />
                                     </div>
                                     <button
-                                        onClick={() => handleRedeem(data.vendorId, data.settings.pointsRequired, data.points)}
-                                        disabled={data.points < data.settings.pointsRequired}
+                                        onClick={() => handleRedeem(data.vendorId, data.settings.pointsNeeded, data.points)}
+                                        disabled={data.points < data.settings.pointsNeeded}
                                         className={`mt-2 px-3 py-1 rounded ${
-                                            data.points >= data.settings.pointsRequired
+                                            data.points >= data.settings.pointsNeeded
                                                 ? "bg-green-600 text-white"
                                                 : "bg-gray-300 text-gray-600 cursor-not-allowed"
                                         }`}
