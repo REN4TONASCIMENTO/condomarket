@@ -36,7 +36,7 @@ Este projeto foi desenvolvido com o objetivo de criar um **marketplace interno p
 
 ## ✨ Demonstração
 
-[**Acesse a Demonstração Ao Vivo »**](LINK_PARA_SEU_DEPLOY)
+Em andamento
 
 ---
 
