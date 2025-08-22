@@ -66,7 +66,7 @@ cd SEU_REPOSITORIO
 npm install
 
 ```
-4. **Configure variáveis de ambiente criando .env.local na raiz:**
+4. **Configure variáveis de ambiente criando .env na raiz:**
 ```.env
 REACT_APP_FIREBASE_API_KEY=sua_chave_da_API
 REACT_APP_FIREBASE_AUTH_DOMAIN=seu_domínio_de_autenticação
