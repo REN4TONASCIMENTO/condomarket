@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { db } from '../../firebase/firebase.js';
+import { db } from '../../firebase/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { ArrowLeftIcon } from '../Shared/icons.js';
 
 const MyOrdersScreen = ({ userProfile, setScreen, cart = [], orderSent = false, handleWhatsAppCheckout }) => {
   const [orders, setOrders] = useState([]);
@@ -10,12 +9,6 @@ const MyOrdersScreen = ({ userProfile, setScreen, cart = [], orderSent = false, 
   const [filterYear, setFilterYear] = useState('Todos');
   const [filterMonth, setFilterMonth] = useState('Todos');
   const [sortOrder, setSortOrder] = useState('desc');
-
-  // Array com os nomes dos meses para o filtro
-  const monthNames = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-  ];
 
   const getOrderDate = (order) => order.createdAt?.toDate?.() || new Date();
 
@@ -68,11 +61,9 @@ const MyOrdersScreen = ({ userProfile, setScreen, cart = [], orderSent = false, 
 
   return (
     <div className="flex-grow p-6 animate-fade-in">
-      <div className="flex items-center mb-8">
-        <button onClick={() => setScreen('userProfile')} className="text-gray-600 hover:text-gray-900 p-2 -ml-2">
-          <ArrowLeftIcon />
-        </button>
-        <h1 className="text-2xl font-bold text-gray-800 ml-4">Meus Pedidos</h1>
+      {/* O ícone ArrowLeftIcon foi removido e o título agora está no centro */}
+      <div className="flex items-center justify-center mb-8">
+        <h1 className="text-2xl font-bold text-gray-800">Meus Pedidos</h1>
       </div>
 
       {cart.length > 0 && !orderSent && (
@@ -104,14 +95,10 @@ const MyOrdersScreen = ({ userProfile, setScreen, cart = [], orderSent = false, 
           {availableYears.map(year => <option key={year}>{year}</option>)}
         </select>
 
-        {/* --- CORREÇÃO APLICADA AQUI --- */}
         <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)} className="border rounded-md p-1 bg-white">
           <option value="Todos">Mês</option>
-          {monthNames.map((month, index) => (
-            <option key={index + 1} value={index + 1}>{month}</option>
-          ))}
+          {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
         </select>
-        {/* ----------------------------- */}
       </div>
 
       {loading ? (

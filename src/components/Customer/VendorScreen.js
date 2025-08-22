@@ -15,6 +15,8 @@ const VendorScreen = ({
     const [products, setProducts] = useState([]);
     const [loadingProducts, setLoadingProducts] = useState(true);
     const [loyaltySettings, setLoyaltySettings] = useState(null);
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState('');
 
     const addToCart = useCallback((productToAdd) => {
         if (activeCartVendor && activeCartVendor.id !== vendor.id) {
@@ -34,6 +36,27 @@ const VendorScreen = ({
         });
     }, [activeCartVendor, setCart, vendor, setActiveCartVendor, setAlertMessage]);
 
+    const removeFromCart = useCallback((productId) => {
+        setCart(currentCart => {
+            const existingItem = currentCart.find(item => item.id === productId);
+            if (!existingItem) {
+                return currentCart;
+            }
+
+            if (existingItem.quantity > 1) {
+                return currentCart.map(item =>
+                    item.id === productId ? { ...item, quantity: item.quantity - 1 } : item
+                );
+            } else {
+                const newCart = currentCart.filter(item => item.id !== productId);
+                if (newCart.length === 0) {
+                    setActiveCartVendor(null);
+                }
+                return newCart;
+            }
+        });
+    }, [setCart, setActiveCartVendor]);
+
     useEffect(() => {
         if (!vendor) return;
 
@@ -42,7 +65,11 @@ const VendorScreen = ({
             try {
                 const productsCollectionRef = collection(db, 'vendors', vendor.id, 'products');
                 const productSnapshot = await getDocs(productsCollectionRef);
-                setProducts(productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                const loadedProducts = productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setProducts(loadedProducts);
+
+                const uniqueCategories = [...new Set(loadedProducts.map(item => item.category).filter(Boolean))];
+                setCategories(uniqueCategories);
 
                 if (vendor.loyaltyEnabled) {
                     const loyaltyConfigRef = doc(db, 'vendors', vendor.id, 'loyaltySettings', 'config');
@@ -76,18 +103,24 @@ const VendorScreen = ({
     };
 
     const formatPrice = (price) => {
-        return typeof price === 'number'
-            ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price)
-            : price;
+        if (!price) return 'R$ 0,00';
+        const numericPrice = Number(price);
+        if (!isNaN(numericPrice)) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numericPrice);
+        }
+        return `R$ ${price}`;
     };
 
     const vendorLogo = vendor.logoUrl || `https://placehold.co/80x80/FBBF24/854D0E?text=${(vendor.name || '?').charAt(0)}`;
+    const filteredProducts = selectedCategory
+        ? products.filter(item => item.category === selectedCategory)
+        : products;
 
     return (
         <div className="flex-grow animate-fade-in">
             {/* Cabeçalho */}
-            <div 
-                className="h-40 bg-cover bg-center relative" 
+            <div
+                className="h-40 bg-cover bg-center relative"
                 style={{ backgroundImage: vendor.headerUrl ? `url(${vendor.headerUrl})` : 'none' }}
             >
                 {!vendor.headerUrl && (
@@ -104,15 +137,14 @@ const VendorScreen = ({
                 </div>
             </div>
 
-            {/* --- CORREÇÃO APLICADA AQUI --- */}
             <div className="relative p-6 -mt-12">
                 <div className="flex items-end space-x-4">
                     <img
                         src={vendorLogo}
-                        className="rounded-full border-4 border-white shadow-lg w-20 h-20"
+                        className="rounded-full border-4 border-white shadow-lg w-20 h-20 flex-shrink-0"
                         alt={`Logo ${vendor.name || 'Vendedor'}`}
                     />
-                    <div>
+                    <div className="flex-grow flex flex-col justify-end">
                         <h2 className="text-2xl font-bold text-gray-800">{vendor.name || 'Nome não disponível'}</h2>
                         <p className="text-gray-600">{vendor.owner || 'Proprietário não informado'} - {vendor.location || 'Localização não informada'}</p>
                     </div>
@@ -136,40 +168,87 @@ const VendorScreen = ({
                     </div>
                 )}
             </div>
-            {/* ----------------------------- */}
 
             <div className="px-6 pb-24">
                 <h3 className="text-lg font-semibold text-gray-700 mb-3 border-t pt-4">Cardápio & Serviços</h3>
+
+                {categories.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        <button
+                            onClick={() => setSelectedCategory('')}
+                            className={`px-3 py-1 rounded-full ${selectedCategory === '' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                        >
+                            Todas
+                        </button>
+                        {categories.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setSelectedCategory(cat)}
+                                className={`px-3 py-1 rounded-full ${selectedCategory === cat ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {loadingProducts ? (
                     <p className="text-gray-500">Carregando produtos...</p>
-                ) : products.length > 0 ? (
+                ) : filteredProducts.length > 0 ? (
                     <div className="space-y-3">
-                        {products.map(product => (
-                            <div key={product.id} className="bg-white p-3 rounded-lg border border-gray-200 flex items-center space-x-4">
-                                <img
-                                    src={product.imageUrl || 'https://placehold.co/80x80/gray/white?text=Item'}
-                                    className="rounded-md w-20 h-20 object-cover"
-                                    alt={product.name || 'Produto sem imagem'}
-                                />
-                                <div className="flex-grow">
-                                    <h4 className="font-semibold text-gray-800">{product.name || 'Produto sem nome'}</h4>
-                                    <p className="text-sm text-gray-500 mb-2">{product.description || 'Descrição não disponível'}</p>
-                                    {product.availability && (
-                                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${getAvailabilityClass(product.availability)}`}>
-                                            {product.availability}
-                                        </span>
-                                    )}
-                                    <p className="font-bold text-indigo-600 mt-2">{formatPrice(product.price)}</p>
+                        {filteredProducts.map(product => {
+                            const itemInCart = cart.find(item => item.id === product.id);
+                            const quantity = itemInCart ? itemInCart.quantity : 0;
+
+                            return (
+                                <div key={product.id} className="bg-white p-3 rounded-lg border border-gray-200 flex items-center space-x-4">
+                                    <img
+                                        src={product.imageUrl || 'https://placehold.co/80x80/gray/white?text=Item'}
+                                        className="rounded-md w-20 h-20 object-cover flex-shrink-0"
+                                        alt={product.name || 'Produto sem imagem'}
+                                    />
+                                    <div className="flex-grow flex flex-col justify-center">
+                                        <h4 className="font-semibold text-gray-800">{product.name || 'Produto sem nome'}</h4>
+                                        <p className="text-sm text-gray-500 mb-2">{product.description || 'Descrição não disponível'}</p>
+                                        {product.availability && (
+                                            <span className={`text-xs font-bold px-2 py-1 rounded-full ${getAvailabilityClass(product.availability)}`}>
+                                                {product.availability}
+                                            </span>
+                                        )}
+                                        <p className="font-bold text-indigo-600 mt-2">{formatPrice(product.price)}</p>
+                                    </div>
+                                    <div className="flex-shrink-0">
+                                        {quantity === 0 ? (
+                                            <button
+                                                onClick={() => addToCart(product)}
+                                                aria-label={`Adicionar ${product.name || 'produto'} ao carrinho`}
+                                                className="bg-indigo-100 text-indigo-600 h-10 w-10 rounded-full flex items-center justify-center font-bold text-xl hover:bg-indigo-200 transition"
+                                            >
+                                                +
+                                            </button>
+                                        ) : (
+                                            <div className="flex items-center space-x-2">
+                                                <button
+                                                    onClick={() => removeFromCart(product.id)}
+                                                    aria-label={`Remover uma unidade de ${product.name || 'produto'}`}
+                                                    className="bg-gray-200 text-gray-700 h-8 w-8 rounded-full flex items-center justify-center font-bold text-lg hover:bg-gray-300 transition"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="font-semibold text-gray-800 text-lg w-6 text-center">{quantity}</span>
+                                                <button
+                                                    onClick={() => addToCart(product)}
+                                                    aria-label={`Adicionar uma unidade de ${product.name || 'produto'}`}
+                                                    className="bg-indigo-600 text-white h-8 w-8 rounded-full flex items-center justify-center font-bold text-lg hover:bg-indigo-700 transition"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <button
-                                    onClick={() => addToCart(product)}
-                                    aria-label={`Adicionar ${product.name || 'produto'} ao carrinho`}
-                                    className="bg-indigo-100 text-indigo-600 h-10 w-10 rounded-full flex items-center justify-center font-bold text-xl hover:bg-indigo-200 transition"
-                                >
-                                    +
-                                </button>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 ) : (
                     <p className="text-gray-500">Este vendedor ainda não adicionou produtos.</p>

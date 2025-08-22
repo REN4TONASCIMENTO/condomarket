@@ -7,10 +7,10 @@ import {
     sendPasswordResetEmail
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { auth, db, googleProvider } from '../../firebase/firebase.js';
-import { translateAuthError, isPasswordStrong } from '../../utils/authHelpers.js';
-import { StoreIcon, GoogleIcon, ArrowLeftIcon } from '../Shared/icons.js';
-import RoleSelectionScreen from './RoleSelectionScreen.js';
+import { auth, db, googleProvider } from '../../firebase/firebase';
+import { translateAuthError, isPasswordStrong } from '../../utils/authHelpers';
+import { StoreIcon, GoogleIcon, ArrowLeftIcon } from '../Shared/icons';
+import RoleSelectionScreen from './RoleSelectionScreen';
 
 // Função para criar perfil no Firestore
 const createUserProfile = async (user, role, name) => {
@@ -48,7 +48,7 @@ const AuthScreen = ({ setScreen, screen }) => {
     const [authUser, setAuthUser] = useState(null);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
-    const [role, setRole] = useState('customer'); // 1. Estado para a função do utilizador
+    const [role, setRole] = useState('customer');
 
     const handleEmailPasswordAuth = useCallback(async () => {
         setError('');
@@ -63,9 +63,7 @@ const AuthScreen = ({ setScreen, screen }) => {
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 await updateProfile(userCredential.user, { displayName: name });
-                // 2. Cria o perfil com a função selecionada imediatamente
                 await createUserProfile(userCredential.user, role, name);
-                // O App.jsx irá detetar o novo utilizador e redirecionar
             } catch (err) {
                 setError(translateAuthError(err.code));
             }
@@ -76,7 +74,7 @@ const AuthScreen = ({ setScreen, screen }) => {
                 setError(translateAuthError(err.code));
             }
         }
-    }, [screen, name, email, password, role, setScreen, setError]);
+    }, [screen, name, email, password, role]);
 
     const handleGoogleAuth = useCallback(async () => {
         setError('');
@@ -84,7 +82,7 @@ const AuthScreen = ({ setScreen, screen }) => {
         try {
             const userCredential = await signInWithPopup(auth, googleProvider);
             setAuthUser(userCredential.user);
-            setScreen('selectRole'); // Para o Google, a seleção de função acontece depois
+            setScreen('selectRole');
         } catch (err) {
             setError(translateAuthError(err.code));
         }
@@ -105,7 +103,6 @@ const AuthScreen = ({ setScreen, screen }) => {
     const handleRoleSelected = useCallback(async (selectedRole) => {
         if (!authUser) return;
         await createUserProfile(authUser, selectedRole, authUser.displayName);
-        // O App.jsx irá detetar a mudança e redirecionar
     }, [authUser]);
 
     if (screen === 'resetPassword') {
@@ -141,7 +138,6 @@ const AuthScreen = ({ setScreen, screen }) => {
                     <>
                         <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full border rounded-lg p-2" placeholder="Nome completo" />
                         
-                        {/* --- CORREÇÃO APLICADA AQUI --- */}
                         <div>
                             <label className="text-sm font-medium text-gray-700">Eu sou:</label>
                             <div className="flex mt-2 rounded-lg border border-gray-300">
@@ -161,7 +157,6 @@ const AuthScreen = ({ setScreen, screen }) => {
                                 </button>
                             </div>
                         </div>
-                        {/* ----------------------------- */}
                     </>
                 )}
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full border rounded-lg p-2" placeholder="E-mail" />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { auth, db, storage } from '../../firebase/firebase.js';
@@ -71,20 +71,19 @@ const EditVendorProfileScreen = ({ user, vendorProfile, setScreen }) => {
         }
     };
 
-    // --- CORREÇÃO APLICADA AQUI: Função de upload mais robusta ---
     const uploadImage = useCallback((file, path) => {
         return new Promise((resolve, reject) => {
             if (!user?.uid) {
                 return reject(new Error("Utilizador não autenticado."));
             }
 
+            const storageRef = ref(storage, `${path}/${user.uid}/${Date.now()}_${file.name}`);
+            const uploadTask = uploadBytesResumable(storageRef, file);
+
             const uploadTimeout = setTimeout(() => {
                 uploadTask.cancel();
                 reject(new Error("O upload demorou muito. Verifique sua conexão e as regras de segurança do Firebase Storage."));
             }, 60000); // Timeout de 60 segundos
-
-            const storageRef = ref(storage, `${path}/${user.uid}/${Date.now()}_${file.name}`);
-            const uploadTask = uploadBytesResumable(storageRef, file);
 
             uploadTask.on('state_changed',
                 (snapshot) => {
@@ -93,10 +92,13 @@ const EditVendorProfileScreen = ({ user, vendorProfile, setScreen }) => {
                 },
                 (error) => {
                     clearTimeout(uploadTimeout);
-                    console.error("Erro detalhado do Firebase Storage:", error);
+                    // Log do erro completo para depuração
+                    console.error("Firebase Storage Upload Error:", error);
                     let friendlyError = "Falha no upload da imagem. Tente novamente.";
                     if (error.code === 'storage/unauthorized') {
-                        friendlyError = "Erro de permissão. Verifique as regras de segurança do seu Firebase Storage.";
+                        friendlyError = "Erro de permissão. Verifique as regras de segurança do seu Firebase Storage e recarregue a página.";
+                    }else if (error.code === 'storage/canceled') {
+                         friendlyError = "Upload cancelado pelo usuário.";
                     }
                     reject(new Error(friendlyError));
                 },
@@ -112,9 +114,14 @@ const EditVendorProfileScreen = ({ user, vendorProfile, setScreen }) => {
             );
         });
     }, [user]);
-    // --------------------------------------------------------------------
 
     const handleSave = async () => {
+        if (!user) {
+            setError("Sua sessão pode ter expirado. Por favor, recarregue a página.");
+            setSaving(false);
+            return;
+        }
+
         setError('');
         if (!profileData.name.trim()) {
             setError('O nome da loja é obrigatório.');
@@ -142,10 +149,15 @@ const EditVendorProfileScreen = ({ user, vendorProfile, setScreen }) => {
 
             const vendorRef = doc(db, 'vendors', user.uid);
             await updateDoc(vendorRef, dataToSave);
+            
+            // Garante que a subcoleção de configuração de fidelidade também seja atualizada
+            const loyaltyConfigRef = doc(db, 'vendors', user.uid, 'loyaltySettings', 'config');
+            await setDoc(loyaltyConfigRef, dataToSave.loyaltySettings, { merge: true });
+
             await updateProfile(auth.currentUser, { displayName: profileData.name });
 
             setMessage('Perfil salvo com sucesso!');
-            timeoutRef.current = setTimeout(() => setScreen('vendorDashboard'), 1500);
+            timeoutRef.current = setTimeout(() => setScreen('vendorProfile'), 1500);
         } catch (error) {
             console.error('Erro ao salvar o perfil:', error);
             setError(error.message || 'Não foi possível salvar. Tente novamente.');
@@ -159,7 +171,7 @@ const EditVendorProfileScreen = ({ user, vendorProfile, setScreen }) => {
     return (
         <div className="flex-grow p-6 animate-fade-in">
             <div className="flex items-center mb-8">
-                <button onClick={() => setScreen('vendorDashboard')} className="text-gray-600 hover:text-gray-900 p-2 -ml-2" aria-label="Voltar"><ArrowLeftIcon /></button>
+                <button onClick={() => setScreen('vendorProfile')} className="text-gray-600 hover:text-gray-900 p-2 -ml-2" aria-label="Voltar"><ArrowLeftIcon /></button>
                 <h1 className="text-2xl font-bold text-gray-800 ml-4">Editar Perfil da Loja</h1>
             </div>
 

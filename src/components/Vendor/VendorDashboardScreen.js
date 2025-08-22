@@ -8,12 +8,17 @@ const VendorDashboardScreen = ({ user, setScreen, setEditingItem }) => {
     const [pendingOrders, setPendingOrders] = useState([]);
     const [allCompletedOrders, setAllCompletedOrders] = useState([]);
     const [visibleOrdersCount, setVisibleOrdersCount] = useState(5);
+    const [visibleProductsCount, setVisibleProductsCount] = useState(5);
     const [loading, setLoading] = useState(true);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [sortOrder, setSortOrder] = useState('desc');
     const [filterYear, setFilterYear] = useState('Todos');
     const [filterMonth, setFilterMonth] = useState('Todos');
     const [actionLoading, setActionLoading] = useState(false);
+    
+    // ESTADOS PARA OS FILTROS COMBINADOS
+    const [productSearchQuery, setProductSearchQuery] = useState('');
+    const [productFilterCategory, setProductFilterCategory] = useState('Todas');
 
     const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -65,6 +70,32 @@ const VendorDashboardScreen = ({ user, setScreen, setEditingItem }) => {
         });
         return orders;
     }, [allCompletedOrders, sortOrder, filterYear, filterMonth]);
+
+    // LÓGICA DE FILTRAGEM DE PRODUTOS COMBINADA
+    const filteredMyProducts = useMemo(() => {
+        let products = [...myProducts];
+        
+        // 1. Filtra por termo de pesquisa
+        if (productSearchQuery) {
+            const query = productSearchQuery.toLowerCase();
+            products = products.filter(product =>
+                (product.name && product.name.toLowerCase().includes(query)) ||
+                (product.description && product.description.toLowerCase().includes(query))
+            );
+        }
+
+        // 2. Filtra por categoria
+        if (productFilterCategory !== 'Todas') {
+            products = products.filter(product => product.category === productFilterCategory);
+        }
+        
+        return products;
+    }, [myProducts, productSearchQuery, productFilterCategory]);
+
+    const availableCategories = useMemo(() => {
+        const categories = [...new Set(myProducts.map(product => product.category).filter(cat => cat))];
+        return ['Todas', ...categories];
+    }, [myProducts]);
 
     const handleConfirmSale = async (order) => {
         if (actionLoading) return;
@@ -175,18 +206,46 @@ const VendorDashboardScreen = ({ user, setScreen, setEditingItem }) => {
                         </div>
                     ))}
                     {visibleOrdersCount < filteredCompletedOrders.length && (
-                        <button onClick={() => setVisibleOrdersCount(c => c + 5)} className="w-full text-center text-indigo-600 font-semibold text-sm py-2">
+                        <button onClick={() => setVisibleOrdersCount(c => c + 5)} className="mt-4 w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition">
                             Ver mais
                         </button>
                     )}
+
+                    {visibleOrdersCount >= filteredCompletedOrders.length && filteredCompletedOrders.length > 5 && (
+                        <button onClick={() => setVisibleOrdersCount(5)} className="mt-4 w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition">
+                            Ver menos
+                        </button>
+                    )}
                 </div>
+
             ) : <p className="text-sm text-gray-500 mb-6">Nenhuma venda encontrada para estes filtros.</p>}
 
             {/* Produtos */}
             <h2 className="text-lg font-semibold text-gray-700 mb-3 border-t pt-4">Meus Itens</h2>
-            {myProducts.length > 0 ? (
+            
+            {/* CONTÊINER FLEXÍVEL PARA OS DOIS FILTROS */}
+            <div className="flex flex-col sm:flex-row gap-2 mb-4 text-sm">
+                <input
+                    type="text"
+                    placeholder="Buscar por nome ou descrição..."
+                    value={productSearchQuery}
+                    onChange={e => setProductSearchQuery(e.target.value)}
+                    className="flex-grow border rounded-md p-2"
+                />
+                <select 
+                    value={productFilterCategory} 
+                    onChange={e => setProductFilterCategory(e.target.value)} 
+                    className="w-full sm:w-auto border rounded-md p-2 bg-white"
+                >
+                    {availableCategories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                </select>
+            </div>
+            
+            {filteredMyProducts.length > 0 ? (
                 <div className="space-y-3">
-                    {myProducts.map(product => (
+                    {filteredMyProducts.slice(0, visibleProductsCount).map(product => (
                         <div key={product.id} className="bg-white p-3 rounded-lg border flex items-center space-x-4">
                             <img 
                                 src={product.imageUrl || 'https://placehold.co/64x64/gray/white?text=Item'} 
@@ -203,6 +262,16 @@ const VendorDashboardScreen = ({ user, setScreen, setEditingItem }) => {
                             </div>
                         </div>
                     ))}
+                    {visibleProductsCount < filteredMyProducts.length && (
+                        <button onClick={() => setVisibleProductsCount(c => c + 5)} className="mt-4 w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition">
+                            Ver mais
+                        </button>
+                    )}
+                    {visibleProductsCount >= filteredMyProducts.length && myProducts.length > 5 && (
+                        <button onClick={() => setVisibleProductsCount(5)} className="mt-4 w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition">
+                            Ver menos
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="text-center text-gray-500 mt-10 border-2 border-dashed rounded-lg p-8">

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { doc, addDoc, updateDoc, collection } from 'firebase/firestore';
+import React, { useState, useEffect, useCallback } from 'react';
+import { doc, addDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../firebase/firebase.js';
 import { ArrowLeftIcon } from '../Shared/icons.js';
@@ -15,10 +15,23 @@ const AddItemScreen = ({ user, setScreen, editingItem, setEditingItem }) => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [category, setCategory] = useState('');
+    const [categories, setCategories] = useState([]);
 
     const productAvailabilityOptions = ['Pronta Entrega', 'Apenas por Encomenda'];
 
-    // Preencher campos se estiver editando
+    // --- Carregar categorias existentes ---
+    useEffect(() => {
+        const fetchCategories = async () => {
+            if (!user?.uid) return;
+            const categoriesCollection = collection(db, 'vendors', user.uid, 'categories');
+            const categoriesSnapshot = await getDocs(categoriesCollection);
+            const categoriesList = categoriesSnapshot.docs.map(doc => doc.data().name);
+            setCategories(categoriesList);
+        };
+        fetchCategories();
+    }, [user]);
+
     useEffect(() => {
         if (editingItem) {
             setItemType(editingItem.type || 'product');
@@ -27,8 +40,8 @@ const AddItemScreen = ({ user, setScreen, editingItem, setEditingItem }) => {
             setPrice(editingItem.price || '');
             setAvailability(editingItem.availability || 'Pronta Entrega');
             setImageUrl(editingItem.imageUrl || '');
+            setCategory(editingItem.category || '');
         } else {
-            // Resetar o formulário
             setItemType('product');
             setName('');
             setDescription('');
@@ -37,28 +50,22 @@ const AddItemScreen = ({ user, setScreen, editingItem, setEditingItem }) => {
             setImageUrl('');
             setImageFile(null);
             setUploadProgress(0);
+            setCategory('');
         }
     }, [editingItem]);
 
-    // Upload seguro da imagem
-    const uploadImage = (file) => {
+    const uploadImage = useCallback((file) => {
         return new Promise((resolve, reject) => {
+            if (!user?.uid) return reject(new Error("Usuário não autenticado."));
             const storageRef = ref(storage, `products/${user.uid}/${Date.now()}_${file.name}`);
             const uploadTask = uploadBytesResumable(storageRef, file);
-
-            uploadTask.on(
-                'state_changed',
-                snapshot => {
-                    setUploadProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                },
+            uploadTask.on('state_changed',
+                snapshot => setUploadProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100),
                 error => reject(error),
-                async () => {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    resolve(downloadURL);
-                }
+                async () => resolve(await getDownloadURL(uploadTask.snapshot.ref))
             );
         });
-    };
+    }, [user]);
 
     const handleImageChange = (e) => {
         if (e.target.files[0]) {
@@ -75,6 +82,7 @@ const AddItemScreen = ({ user, setScreen, editingItem, setEditingItem }) => {
 
         setLoading(true);
         setError('');
+        setUploadProgress(0);
 
         let finalImageUrl = editingItem ? editingItem.imageUrl : '';
 
@@ -82,9 +90,19 @@ const AddItemScreen = ({ user, setScreen, editingItem, setEditingItem }) => {
             try {
                 finalImageUrl = await uploadImage(imageFile);
             } catch (err) {
-                setError('Falha no upload da imagem.');
+                setError(err.message || 'Falha no upload da imagem.');
                 setLoading(false);
                 return;
+            }
+        }
+
+        // Salvar nova categoria se não existir
+        if (category && !categories.includes(category)) {
+            try {
+                const categoryRef = collection(db, 'vendors', user.uid, 'categories');
+                await addDoc(categoryRef, { name: category });
+            } catch (err) {
+                console.error("Erro ao salvar categoria:", err);
             }
         }
 
@@ -94,7 +112,8 @@ const AddItemScreen = ({ user, setScreen, editingItem, setEditingItem }) => {
             description,
             price: itemType === 'product' ? parseFloat(price) : price,
             availability: itemType === 'product' ? availability : '',
-            imageUrl: finalImageUrl
+            imageUrl: finalImageUrl,
+            category
         };
 
         try {
@@ -164,6 +183,25 @@ const AddItemScreen = ({ user, setScreen, editingItem, setEditingItem }) => {
                 </div>
 
                 <div>
+                    <label htmlFor="category" className="text-sm font-medium">Categoria</label>
+                    <select
+                        value={category}
+                        onChange={e => setCategory(e.target.value)}
+                        className="mt-1 w-full border rounded-lg p-2 bg-white"
+                    >
+                        <option value="">Selecione ou digite nova</option>
+                        {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                    </select>
+                    <input
+                        type="text"
+                        placeholder="Ou digite uma nova categoria"
+                        value={category}
+                        onChange={e => setCategory(e.target.value)}
+                        className="mt-2 w-full border rounded-lg p-2"
+                    />
+                </div>
+
+                <div>
                     <label htmlFor="price" className="text-sm font-medium">{itemType === 'product' ? 'Preço (ex: 25.50)' : 'Preço (ex: 50 ou "Sob consulta")'}</label>
                     <input
                         id="price"
@@ -193,11 +231,12 @@ const AddItemScreen = ({ user, setScreen, editingItem, setEditingItem }) => {
                     <input
                         id="image"
                         type="file"
+                        accept="image/*"
                         onChange={handleImageChange}
                         className="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                     />
                     {imageUrl && <img src={imageUrl} alt="Pré-visualização" className="mt-2 rounded-lg w-32 h-32 object-cover"/>}
-                    {loading && uploadProgress > 0 && (
+                    {loading && uploadProgress > 0 && uploadProgress < 100 && (
                         <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
                             <div className="bg-indigo-600 h-2.5 rounded-full" style={{width: `${uploadProgress}%`}}></div>
                         </div>
@@ -209,7 +248,7 @@ const AddItemScreen = ({ user, setScreen, editingItem, setEditingItem }) => {
 
             <button
                 onClick={handleSaveItem}
-                disabled={loading || (uploadProgress > 0 && uploadProgress < 100)}
+                disabled={loading}
                 className="mt-8 w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-indigo-300"
             >
                 {loading ? 'Salvando...' : 'Salvar Item'}
